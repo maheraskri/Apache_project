@@ -1,0 +1,29 @@
+---
+- name: Part1
+  hosts: node5
+  gather_facts: false
+  tasks:
+  - name: copy the TLS certifacte
+    fetch:
+      src: "/etc/pki/tls/certs/myrepo.crt"
+      dest: "/tmp/"
+      flat: yes
+
+- name: Part2
+  hosts: node2,node4
+  gather_facts: false
+  tasks: 
+  - name: Inject the certificate into the trusted certificate store 
+    copy: 
+      src: "/tmp/myrepo.crt"
+      dest: "/etc/pki/ca-trust/source/anchors/"
+  - name: create the repo config file
+    template: 
+      src: "remote.j2"
+      dest: "/etc/yum.repos.d/remote.repo"
+      owner: root
+      group: root
+      mode: 0644 
+  - name: update the trusted certificate store
+    shell:
+      cmd: "update-ca-trust 2>/dev/null"
